@@ -1,4 +1,4 @@
-# Luke's Auto-Rice Bootstrapping Scripts (LARBS)
+# Sway wm Auto-Rice Bootstrapping Scripts (swarbs)
 
 ## Installation:
 
