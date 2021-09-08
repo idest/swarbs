@@ -225,10 +225,6 @@ git update-index --assume-unchanged "/home/$name/README.md" "/home/$name/LICENSE
 # Most important command! Get rid of the beep!
 systembeepoff
 
-# Fix fluidsynth/pulseaudio issue.
-grep -q "OTHER_OPTS='-a pulseaudio -m alsa_seq -r 48000'" /etc/conf.d/fluidsynth ||
-	echo "OTHER_OPTS='-a pulseaudio -m alsa_seq -r 48000'" >> /etc/conf.d/fluidsynth
-
 # Start/restart PulseAudio.
 pkill -15 -x 'pulseaudio'; sudo -u "$name" pulseaudio --start
 
