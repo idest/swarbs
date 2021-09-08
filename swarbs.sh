@@ -65,7 +65,6 @@ adduserandpass() { \
 
 refreshkeys() { \
 	dialog --infobox "Refreshing Arch Keyring..." 4 40
-	pacman -Q artix-keyring >/dev/null 2>&1 && pacman --noconfirm -S artix-keyring artix-archlinux-support >/dev/null 2>&1
 	pacman --noconfirm -S archlinux-keyring >/dev/null 2>&1
 	}
 
@@ -219,12 +218,6 @@ systembeepoff
 # Make zsh the default shell for the user.
 chsh -s /bin/zsh "$name" >/dev/null 2>&1
 sudo -u "$name" mkdir -p "/home/$name/.cache/zsh/"
-
-# dbus UUID must be generated for Artix runit.
-dbus-uuidgen > /var/lib/dbus/machine-id
-
-# Use system notifications for Brave on Artix
-echo "export \$(dbus-launch)" > /etc/profile.d/dbus.sh
 
 # Tap to click
 [ ! -f /etc/X11/xorg.conf.d/40-libinput.conf ] && printf 'Section "InputClass"
