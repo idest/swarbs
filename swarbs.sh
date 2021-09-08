@@ -60,12 +60,16 @@ preinstallmsg() { \
 	dialog --title "Let's get this party started!" --yes-label "Let's go!" --no-label "No, nevermind!" --yesno "The rest of the installation will now be totally automated, so you can sit back and relax.\\n\\nIt will take some time, but when done, you can relax even more with your complete system.\\n\\nNow just press <Let's go!> and the system will begin installation!" 13 60 || { clear; exit 1; }
 	}
 
-adduserandpass() { \
-	# Adds user `$name` with password $pass1.
+addormoduser() { \
+  id -u "$name" >/dev/null 2>&1 &&
+  # If user already exists, adds user to the wheel group, and changes their shell to zsh.
+	usermod -aG wheel "$name" &&
+  chsh -s /bin/zsh "$name" >/dev/null 2>&1 &&
+  sudo -u "$name" mkdir -p "/home/$name/.cache/zsh/" ||
+	# Otherwise adds a new user `$name` with password $pass1.
 	dialog --infobox "Adding user \"$name\"..." 4 50
-	useradd -m -g wheel -s /bin/zsh "$name" >/dev/null 2>&1 ||
-	usermod -a -G wheel "$name" && mkdir -p /home/"$name" && chown "$name":wheel /home/"$name"
-	export repodir="/home/$name/.local/src"; mkdir -p "$repodir"; chown -R "$name":wheel "$(dirname "$repodir")"
+	useradd -m -G wheel -s /bin/zsh "$name" >/dev/null 2>&1
+	export repodir="/home/$name/.local/src"; mkdir -p "$repodir"; chown -R "$name":"$name" "$(dirname "$repodir")"
 	echo "$name:$pass1" | chpasswd
 	unset pass1 pass2 ;}
 
@@ -184,7 +188,7 @@ done
 dialog --title "LARBS Installation" --infobox "Synchronizing system time to ensure successful and secure installation of software..." 4 70
 ntpdate 0.us.pool.ntp.org >/dev/null 2>&1
 
-adduserandpass || error "Error adding username and/or password."
+addormodusername || error "Error adding or modifying username"
 
 [ -f /etc/sudoers.pacnew ] && cp /etc/sudoers.pacnew /etc/sudoers # Just in case
 
@@ -220,10 +224,6 @@ git update-index --assume-unchanged "/home/$name/README.md" "/home/$name/LICENSE
 
 # Most important command! Get rid of the beep!
 systembeepoff
-
-# Make zsh the default shell for the user.
-chsh -s /bin/zsh "$name" >/dev/null 2>&1
-sudo -u "$name" mkdir -p "/home/$name/.cache/zsh/"
 
 # Fix fluidsynth/pulseaudio issue.
 grep -q "OTHER_OPTS='-a pulseaudio -m alsa_seq -r 48000'" /etc/conf.d/fluidsynth ||
