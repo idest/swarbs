@@ -147,8 +147,8 @@ finalize(){ \
 
 ### This is how everything happens in an intuitive format and order.
 
-# Check if user is root on Arch distro. Install dialog.
-pacman --noconfirm --needed -Sy dialog || error "Are you sure you're running this as the root user, are on an Arch-based distribution and have an internet connection?"
+# Check if user is root on Arch distro. Upgrade system and install dialog.
+pacman --noconfirm --needed -Syu dialog || error "Are you sure you're running this as the root user, are on an Arch-based distribution and have an internet connection?"
 
 # Welcome user and pick dotfiles.
 welcomemsg || error "User exited."
