@@ -5,11 +5,17 @@
 On an Arch-based distribution as root, run the following:
 
 ```
-curl -LO larbs.xyz/larbs.sh
-sh larbs.sh
+curl -LO https://raw.githubusercontent.com/idest/swarbs/swarbs.sh
+sh swarbs.sh
 ```
 
 That's it.
+
+## What is swarbs?
+
+This is just [LARBS](https://github.com/lukesmithxyz/LARBS) with some minimal changes, and made to work with
+[my dotfiles repo](https://github.com/idest/dotfiles) and [the programs I use](progs.csv) by default, which are both centered
+around [sway window manager](https://swaywm.org/).
 
 ## What is LARBS?
 
