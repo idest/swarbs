@@ -82,14 +82,27 @@ newperms() { # Set special sudoers settings for install (or after).
   sed -i "/#LARBS/d" /etc/sudoers
   echo "$* #LARBS" >> /etc/sudoers ;}
 
-manualinstall() { # Installs $1 manually. Used only for AUR helper here.
+createlocalrepo() { # Creates a local repository to manage aur packages.
+  #dialog --infobox "Creating local repository for AUR packages."
+  localrepo="/var/cache/pacman/aur"
+  install -d "$localrepo" -o "$name"
+  printf "[options]\nCacheDir = /var/cache/pacman/pkg\nCacheDir = %s\nCleanMethod = KeepCurrent\n\n[aur]\nSigLevel = Optional TrustAll\nServer = file://%s\n" "$localrepo" "$localrepo" > /etc/pacman.d/aur
+  echo "Include = /etc/pacman.d/aur" >> /etc/pacman.conf
+  sudo -i -u "$name" repo-add -q "$localrepo/aur.db.tar.gz" >/dev/null 2>&1
+}
+
+aurutilsinstall() { # Installs aurutils manually. Used only for AUR helper here.
   # Should be run after repodir is created and var is set.
-  dialog --infobox "Installing \"$1\", an AUR helper..." 4 50
-  sudo -u "$name" mkdir -p "$repodir/$1"
-  sudo -u "$name" git clone --depth 1 "https://aur.archlinux.org/$1.git" "$repodir/$1" >/dev/null 2>&1 ||
-    { cd "$repodir/$1" || return 1 ; sudo -u "$name" git pull --force origin master;}
-  cd "$repodir/$1"
-  sudo -u "$name" -D "$repodir/$1" makepkg --noconfirm -si >/dev/null 2>&1 || return 1
+  #dialog --infobox "Installing aurutils, an AUR helper..." 4 50
+  sudo -u "$name" mkdir -p "$repodir/aurutils"
+  sudo -u "$name" git clone --depth 1 "https://aur.archlinux.org/aurutils.git" "$repodir/aurutils" >/dev/null 2>&1 ||
+    { cd "$repodir/aurutils" || return 1 ; sudo -u "$name" git pull --force origin master;}
+  cd "$repodir/aurutils"
+  sudo -u "$name" makepkg --noconfirm -s >/dev/null 2>&1 || return 1
+  mv $repodir/aurutils/aurutils-*pkg* "$localrepo"
+  cd "$localrepo"
+  sudo -u "$name" repo-add -n aur.db.tar.gz aurutils-*pkg*
+  pacman --noconfirm --needed -Syu aurutils >/dev/null 2>&1
 }
 
 maininstall() { # Installs all needed programs from main repo.
@@ -110,7 +123,8 @@ gitmakeinstall() {
 aurinstall() { \
   dialog --title "LARBS Installation" --infobox "Installing \`$1\` ($n of $total) from the AUR. $1 $2" 5 70
   echo "$aurinstalled" | grep -q "^$1$" && return 1
-  sudo -u "$name" $aurhelper -S --noconfirm "$1" >/dev/null 2>&1
+  sudo -u "$name" aur sync --noview --nograph "$1" #>/dev/null 2>&1
+  pacman -S --noconfirm "$1" #>/dev/null 2>&1
   }
 
 pipinstall() { \
@@ -203,7 +217,9 @@ grep -q "ILoveCandy" /etc/pacman.conf || sed -i "/#VerbosePkgLists/a ILoveCandy"
 # Use all cores for compilation.
 sed -i "s/-j2/-j$(nproc)/;s/^#MAKEFLAGS/MAKEFLAGS/" /etc/makepkg.conf
 
-manualinstall yay-bin || error "Failed to install AUR helper."
+createlocalrepo || error "Failed to create local repo."
+
+aurutilsinstall || error "Failed to install aurutils."
 
 # The command that does all the installing. Reads the progs.csv file and
 # installs each needed program the way required. Be sure to run this only after
